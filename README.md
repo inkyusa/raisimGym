@@ -1,7 +1,5 @@
 # raisimGym: RL examples using raisim
 
-# THIS LIBRARY DEPENDS ON RAISIM WHICH IS NOT PUBLICLY AVAILABLE YET. RAISIM WILL BE RELEASED VERY SOON #
-
 ## What is raisimGym
 raisimGym is an example of a gym environment using raisim. It uses stable-baselines (https://github.com/hill-a/stable-baselines) for training and pybind11 (https://github.com/pybind/pybind11) for wrapping raisim in python.
 
@@ -18,7 +16,7 @@ Here we introduce two variables
 - WORKSPACE: workspace where you clone your git repos
 - LOCAL_BUILD: build directory where you install exported cmake libraries
 
-You can check out our [docker file](/dockers/ubuntu1804/Dockerfile) if you are stuck.
+You can check out our [docker file](/dockers/gpu/Dockerfile) if you are stuck.
 
 ### Python setup
 1. Install python3 
@@ -47,6 +45,8 @@ You might have to add LOCAL_BUILD/lib to your $LD_LIBRARY_PATH to ensure that ld
 ## Workflow
 1. ***Compile*** your c++ environment (instructions followed)
 2. ***Run*** your learning script (instructions followed)
+
+or use the dockerfile provided (instruction below)
 
 ## Compile
 Set your compiler to g++>6.0 as following
@@ -77,6 +77,13 @@ You can make your own runner. To use the example runner,
 ```$xslt
 python3 scripts/anymal_blind_locomotion.py
 ```
+
+## Using raisimGym in Docker
+1. Install docker and Nvidia-docker2 ([instruction](https://github.com/jhwangbo/raisimHelp/tree/master#install-docker--nvidia-docker2)).
+2. Build an image ```docker build -t raisim_gym $WORKSPACE/raisimGym/dockers/gpu```
+3. Create a container using the provided docker runner ```$WORKSPACE/raisimGym/dockers/gpu/runner.bash```
+4. Inside the container, compile your environment and execute your runner
+
 
 ## Examples of trained policies
 
