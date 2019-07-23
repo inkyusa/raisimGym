@@ -25,6 +25,8 @@ if "--env" in sys.argv:
         __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/ANYmal"
     elif environment == 'laikago':
         __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/laikago"
+    elif environment == 'cartpole':
+        __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/cartpole"
     else:
         __ENVIRONMENT_PATH__ = environment
 
