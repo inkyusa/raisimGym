@@ -47,7 +47,7 @@ model = PPO2(
 
 # tensorboard
 # Make sure that your chrome browser is already on.
-#TensorboardLauncher(saver.data_dir + '/PPO2_1')
+TensorboardLauncher(saver.data_dir + '/PPO2_1')
 
 # PPO run
 model.learn(total_timesteps=400000000, eval_every_n=50, log_dir=saver.data_dir, record_video=cfg['record_video'])

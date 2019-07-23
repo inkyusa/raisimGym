@@ -8,5 +8,5 @@ environment:
   control_dt: 0.01
   max_time: 4.0
 
-  forwardVelRewardCoeff: 0.3
+  thetaRewardCoeff: 0.3
   torqueRewardCoeff: -5e-5

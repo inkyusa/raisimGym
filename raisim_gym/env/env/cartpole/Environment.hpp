@@ -24,11 +24,12 @@
 // THE SOFTWARE.
 
 /* Convention
+*   action space = force                                     n = 1, index =0
 *
-*   observation space = [ theta (tilted angle),              n =  1, si =  0
-*                         theta dot (tilted angle velocity,  n =  1, si =  1
-*                         x (position),                      n =  1, si =  2
-*                         x dot (body Linear velocities),    n =  1, si =  3] total 4
+*   observation space = [ x (cart position)                  n =  1, index=0
+                          theta (tilted angle),              n =  1, index=1
+                          x_dot (cart linear velocity),      n =  1, index=2
+*                         theta_dot (tilted angle velocity,  n =  1, index=3] total 4
 */
 
 
@@ -45,6 +46,9 @@
 #include "visualizer/raisimBasicImguiPanel.hpp"
 
 using namespace std;
+#define deg2rad(ang) ((ang) * M_PI / 180.0)
+#define rad2deg(ang) ((ang) * 180.0 / M_PI)
+
 namespace raisim {
 
 class ENVIRONMENT : public RaisimGymEnv {
@@ -55,20 +59,16 @@ class ENVIRONMENT : public RaisimGymEnv {
       RaisimGymEnv(resourceDir, cfg), distribution_(0.0, 0.2), visualizable_(visualizable) {
 
     /// add objects
-    cout<<"hello adsfadfss"<<endl;
     cout<<resourceDir<<endl;
     cartpole_ = world_->addArticulatedSystem(resourceDir+"/cartpole.urdf");
     //cartpole_->setControlMode(raisim::ControlMode::PD_PLUS_FEEDFORWARD_TORQUE);
     cartpole_->setControlMode(raisim::ControlMode::FORCE_AND_TORQUE);
     auto ground = world_->addGround();
     world_->setERP(0,0);
-    cout<<"hello2"<<endl;
     /// get robot data
     gcDim_ = cartpole_->getGeneralizedCoordinateDim();
     gvDim_ = cartpole_->getDOF();
     nJoints_ = 1;
-    cout<<"gcDim_="<<gcDim_<<"gvDim_="<<gvDim_<<endl;
-
     /// initialize containers
     gc_.setZero(gcDim_); gc_init_.setZero(gcDim_);
     gv_.setZero(gvDim_); gv_init_.setZero(gvDim_);
@@ -79,14 +79,14 @@ class ENVIRONMENT : public RaisimGymEnv {
     //gc_init_ << 0, 0, 0.44, 0.7071067, 0.70710678, 0.0, 0.0, 0.0, 0.0, -0.7, 0, 0, -0.7, 0.00, 0, -0.7, 0, 0, -0.7;
 
     /// set pd gains
-    Eigen::VectorXd jointPgain(gcDim_), jointDgain(gvDim_);
-    jointPgain.setZero(); jointPgain.tail(nJoints_).setConstant(40.0);
-    jointDgain.setZero(); jointDgain.tail(nJoints_).setConstant(1.0);
-    cartpole_->setPdGains(jointPgain, jointDgain);
-    cartpole_->setGeneralizedForce(Eigen::VectorXd::Zero(gvDim_));
+    // Eigen::VectorXd jointPgain(gcDim_), jointDgain(gvDim_);
+    // jointPgain.setZero(); jointPgain.tail(nJoints_).setConstant(40.0);
+    // jointDgain.setZero(); jointDgain.tail(nJoints_).setConstant(1.0);
+    // cartpole_->setPdGains(jointPgain, jointDgain);
+    cartpole_->setGeneralizedForce(Eigen::VectorXd::Zero(nJoints_));
 
     /// MUST BE DONE FOR ALL ENVIRONMENTS
-    obDim_ = 4; /// theta, theta_dot, x, x_dot
+    obDim_ = 4; /// x,theta, x_dot, theta_dot
     actionDim_ = nJoints_;
     actionMean_.setZero(actionDim_); actionStd_.setZero(actionDim_);
     obMean_.setZero(obDim_); obStd_.setZero(obDim_);
@@ -96,7 +96,11 @@ class ENVIRONMENT : public RaisimGymEnv {
     actionStd_.setConstant(0.6);
 
     obMean_.setZero();
-    obStd_ << 2*M_PI,10,3,0.1;
+    obStd_ << 3, //cart position (meter)
+              2*M_PI, //pole angle (rad)
+              0.1, //cart velocity (m/s)
+              10; //pole angular velocity (rad/sec)
+
     // obMean_ << 0.44, /// average height
     //     0.0, 0.0, 0.0, /// gravity axis 3
     //     gc_init_.tail(12), /// joint position 12
@@ -111,9 +115,10 @@ class ENVIRONMENT : public RaisimGymEnv {
     //     Eigen::VectorXd::Constant(12, 10.0); /// joint velocities
 
     /// Reward coefficients
-    forwardVelRewardCoeff_ = cfg["forwardVelRewardCoeff"].as<double>();
+    //forwardVelRewardCoeff_ = cfg["thetaRewardCoeff"].as<double>();
     torqueRewardCoeff_ = cfg["torqueRewardCoeff"].as<double>();
-    gui::rewardLogger.init({"forwardVelReward", "torqueReward"});
+    gui::rewardLogger.init({"reward", "torqueReward"});
+    reward_=0;
 
     /// indices of links that should not make contact with ground
     // footIndices_.insert(cartpole_->getBodyIdx("FR_lower_leg"));
@@ -141,6 +146,7 @@ class ENVIRONMENT : public RaisimGymEnv {
       vis->createGraphicalObject(ground, 20, "floor", "checkerboard_green");
       desired_fps_ = 50.;
       vis->setDesiredFPS(desired_fps_);
+      //vis->setStyle(CS_ORBIT);
     }
   }
 
@@ -184,31 +190,32 @@ class ENVIRONMENT : public RaisimGymEnv {
     updateObservation();
 
     torqueReward_ = torqueRewardCoeff_ * cartpole_->getGeneralizedForce().squaredNorm();
-    forwardVelReward_ = forwardVelRewardCoeff_ * bodyLinearVel_[2];
+    reward_=1.0;
 
     if(visualizeThisStep_) {
       gui::rewardLogger.log("torqueReward", torqueReward_);
-      gui::rewardLogger.log("forwardVelReward", forwardVelReward_);
+      gui::rewardLogger.log("reward", reward_);
 
       /// set camera
       auto vis = raisim::OgreVis::get();
       vis->select(cartpoleVisual_->at(0), false);
-      vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
+      //vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
+      //vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
     }
 
-    return torqueReward_ + forwardVelReward_;
+    return torqueReward_ + reward_;
   }
 
   void updateExtraInfo() final {
-    extraInfo_["forward vel reward"] = forwardVelReward_;
-    extraInfo_["base height"] = gc_[2];
+    extraInfo_["reward"] = reward_;
+    //extraInfo_["base height"] = gc_[2];
   }
 
   void updateObservation() {
     cartpole_->getState(gc_, gv_);
     obDouble_.setZero(obDim_); obScaled_.setZero(obDim_);
-    cout<<"gc_="<<gc_<<endl;
-    cout<<"gv_="<<gv_<<endl;
+    //cout<<"gc_="<<gc_<<endl;
+    //cout<<"gv_="<<gv_<<endl;
     // Articulated sysstem (Slidebar->cart->pole)
     // auto cartFrame = cartpole_->getFrameByIdx("slider_to_cart"); //prismatic joint
     // raisim::Vec<3> cartPosition;
@@ -219,16 +226,13 @@ class ENVIRONMENT : public RaisimGymEnv {
     // raisim::Vec<4> quat;
     // cartpole_->getFramePosition_W(poleFrame,poleOrientationR);
     //raisim::rotMatToQuat(quat,poleOrientationR);
-
-
-    
-    obDouble_ << gc_[1],gv_[1],gc_[0],gv_[0]; //theta, theta_dot, x, x_dot
-
-    // obDouble_[0] = gc_[0]; //theta
-    // obDouble_[1] = gv_[0]; //theta_dot
-    // obDouble_[2] = gc_[1]; //x, get cart position
-    // obDouble_[3] = gv_[1]; //x_dot, get cart velocity
+    obDouble_ << gc_,gv_; //x, theta, x_dot, theta_dot
     obScaled_ = (obDouble_-obMean_).cwiseQuotient(obStd_);
+    // cout<<"cart position="<<obDouble_[0]<<endl;
+    // cout<<"cart velocity="<<obDouble_[2]<<endl;
+    // cout<<"pole theta="<<obDouble_[1]<<endl;
+    // cout<<"pole theta dot="<<obDouble_[3]<<endl;
+
 
     // /// body orientation
     // raisim::Vec<4> quat;
@@ -258,13 +262,7 @@ class ENVIRONMENT : public RaisimGymEnv {
 
   bool isTerminalState(float& terminalReward) final {
     terminalReward = float(terminalRewardCoeff_);
-
-    /// if the contact body is not feet
-    for(auto& contact: cartpole_->getContacts())
-      if(footIndices_.find(contact.getlocalBodyIndex()) == footIndices_.end()) {
-        return true;
-      }
-
+    if(rad2deg(abs(obDouble_[1]))> 50.) return true;
     terminalReward = 0.f;
     return false;
   }
@@ -278,13 +276,14 @@ class ENVIRONMENT : public RaisimGymEnv {
 
  private:
   int gcDim_, gvDim_, nJoints_;
+  double reward_;
   bool visualizable_ = false;
   std::normal_distribution<double> distribution_;
   raisim::ArticulatedSystem* cartpole_;
   std::vector<GraphicObject> * cartpoleVisual_;
   Eigen::VectorXd gc_init_, gv_init_, gc_, gv_, actionScaled_,pTarget_, pTarget12_, vTarget_, torque_;
   double terminalRewardCoeff_ = -10.;
-  double forwardVelRewardCoeff_ = 0., forwardVelReward_ = 0.;
+  double thetaRewardCoeff_ = 0., thetaReward_ = 0.;
   double torqueRewardCoeff_ = 0., torqueReward_ = 0.;
   double desired_fps_ = 60.;
   int visualizationCounter_=0;

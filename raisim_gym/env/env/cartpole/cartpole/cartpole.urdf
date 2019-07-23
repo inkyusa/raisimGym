@@ -9,7 +9,7 @@
     <child link="slideBar"/>
   </joint>
 
-    <link name="slideBar">
+  <link name="slideBar">
     <visual>
       <geometry>
         <box size="30 0.05 0.05"/>
@@ -37,7 +37,7 @@
     </visual>
     <collision>
       <geometry>
-          <box size="0.5 0.5 0.2"/>
+        <box size="0.5 0.5 0.2"/>
       </geometry>
       <origin xyz="0 0 0"/>
     </collision>
@@ -58,21 +58,21 @@
   <link name="pole">
     <visual>
       <geometry>
-        <box size="0.05 0.05 1.0"/>	
+        <box size="0.05 0.05 0.0"/>	
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0.5"/>
       <material name="white">
-        <color rgba="1 1 1 1"/>
+        <color rgba="1 0 0 1"/>
       </material>
     </visual>
     <inertial>
-    <origin xyz="0 0 0.5"/>
+      <origin xyz="0 0 0.5"/>
       <mass value="10"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
      <collision>
       <geometry>
-        <box size="0.05 0.05 1.0"/>	
+        <box size="0.05 0.05 0.0"/>	
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0.5"/>
     </collision>
@@ -83,6 +83,8 @@
     <origin xyz="0.0 0.0 0"/>
     <parent link="cart"/>
     <child link="pole"/>
+    <limit effort="80" lower="-6.28" upper="6.28" velocity="15"/>
+    <dynamics damping="0.0" friction="0.0"/>
   </joint>
   
 </robot>
