@@ -66,13 +66,13 @@ class ENVIRONMENT : public RaisimGymEnv {
     auto ground = world_->addGround();
     world_->setERP(0,0);
     /// get robot data
-    gcDim_ = cartpole_->getGeneralizedCoordinateDim();
-    gvDim_ = cartpole_->getDOF();
+    gcDim_ = cartpole_->getGeneralizedCoordinateDim(); //will be two; cart position and pole angle
+    gvDim_ = cartpole_->getDOF(); // will be two; cart linear velocity and pole angular velocity.
     nJoints_ = 1;
     /// initialize containers
     gc_.setZero(gcDim_); gc_init_.setZero(gcDim_);
     gv_.setZero(gvDim_); gv_init_.setZero(gvDim_);
-    torque_.setZero(gvDim_);
+    //torque_.setZero(gvDim_);
     pTarget_.setZero(gcDim_); vTarget_.setZero(gvDim_); pTarget12_.setZero(nJoints_);
 
     /// this is nominal configuration of anymal
@@ -128,6 +128,7 @@ class ENVIRONMENT : public RaisimGymEnv {
 
     /// visualize if it is the first environment
     if (visualizable_) {
+      //cout<<"visualizable_"<<endl;
       auto vis = raisim::OgreVis::get();
 
       /// these method must be called before initApp
@@ -143,10 +144,12 @@ class ENVIRONMENT : public RaisimGymEnv {
       vis->initApp();
 
       cartpoleVisual_ = vis->createGraphicalObject(cartpole_, "Cartpole");
-      vis->createGraphicalObject(ground, 20, "floor", "checkerboard_green");
+      //vis->createGraphicalObject(ground, 20, "floor", "checkerboard_green");
       desired_fps_ = 50.;
       vis->setDesiredFPS(desired_fps_);
-      //vis->setStyle(CS_ORBIT);
+      //auto vis = raisim::OgreVis::get();
+      vis->select(cartpoleVisual_->at(0), false);
+      vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.0), Ogre::Radian(-1.0), 3);
     }
   }
 
@@ -166,7 +169,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     actionScaled_ = action.cast<double>();
     actionScaled_ = actionScaled_.cwiseProduct(actionStd_);
     actionScaled_ += actionMean_;
-
+    //cout<<"actionScaled_="<<actionScaled_<<endl;
     /// action scaling
     // pTarget12_ = action.cast<double>();
     // pTarget12_ = pTarget12_.cwiseProduct(actionStd_);
@@ -197,8 +200,8 @@ class ENVIRONMENT : public RaisimGymEnv {
       gui::rewardLogger.log("reward", reward_);
 
       /// set camera
-      auto vis = raisim::OgreVis::get();
-      vis->select(cartpoleVisual_->at(0), false);
+      //auto vis = raisim::OgreVis::get();
+      //vis->select(cartpoleVisual_->at(0), false);
       //vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
       //vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
     }
@@ -227,6 +230,9 @@ class ENVIRONMENT : public RaisimGymEnv {
     // cartpole_->getFramePosition_W(poleFrame,poleOrientationR);
     //raisim::rotMatToQuat(quat,poleOrientationR);
     obDouble_ << gc_,gv_; //x, theta, x_dot, theta_dot
+    //cout<<"pole theta="<<rad2deg(obDouble_[1])<<endl;
+    //cout<<"cart poistion="<<obDouble_[0]<<endl;
+
     obScaled_ = (obDouble_-obMean_).cwiseQuotient(obStd_);
     // cout<<"cart position="<<obDouble_[0]<<endl;
     // cout<<"cart velocity="<<obDouble_[2]<<endl;
