@@ -443,6 +443,10 @@ class Runner(AbstractEnvRunner):
             if isinstance(self.env.action_space, gym.spaces.Box):
                 clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
             self.obs[:], rewards, self.dones, infos = self.env.step(clipped_actions, visualize=test_mode)
+
+            if np.isinf(rewards).any():
+                print("something wrong here")
+
             for info in infos:
                 maybe_ep_info = info.get('episode')
                 if maybe_ep_info is not None:
@@ -455,6 +459,9 @@ class Runner(AbstractEnvRunner):
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)
+
+        if np.isinf(mb_rewards).any():
+            print("something wrong here")
         mb_actions = np.asarray(mb_actions)
         mb_values = np.asarray(mb_values, dtype=np.float32)
         mb_neglogpacs = np.asarray(mb_neglogpacs, dtype=np.float32)
@@ -463,6 +470,10 @@ class Runner(AbstractEnvRunner):
         # discount/bootstrap off value fn
         mb_advs = np.zeros_like(mb_rewards)
         true_reward = np.copy(mb_rewards)
+
+        if np.isinf(mb_rewards).any():
+            print("something wrong here")
+
         last_gae_lam = 0
         for step in reversed(range(self.n_steps)):
             if step == self.n_steps - 1:

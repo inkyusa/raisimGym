@@ -2,13 +2,10 @@ seed: 1
 record_video: yes
 
 environment:
-  #num_envs: 100
-  #num_threads: 40
-  num_envs: 1
-  num_threads: 1
+  num_envs: 10
+  num_threads: 40
   simulation_dt: 0.0025
   control_dt: 0.01
   max_time: 4.0
 
-  thetaRewardCoeff: 0.3
-  torqueRewardCoeff: -5e-5
+  forceRewardCoeff: -5e-5
