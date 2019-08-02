@@ -23,9 +23,7 @@ saver = ConfigurationSaver(log_dir=log_dir+'/Cartpole_tutorial',
                            save_items=[rsg_root+'raisim_gym/env/env/cartpole/Environment.hpp', cfg_abs_path])
 
 # create environment from the configuration file
-print("test1")
 env = Environment(RaisimGymEnv(__RSCDIR__, dump(cfg['environment'], Dumper=RoundTripDumper)))
-print("test2")
 # Get algorithm
 model = PPO2(
     tensorboard_log=saver.data_dir,
@@ -35,24 +33,25 @@ model = PPO2(
     gamma=0.998,
     n_steps=math.floor(cfg['environment']['max_time'] / cfg['environment']['control_dt']),
     ent_coef=0,
-    learning_rate=1e-3,
+    learning_rate=cfg['environment']['learning_rate'],
     vf_coef=0.5,
     max_grad_norm=0.5,
     lam=0.95,
-    nminibatches=1,
-    noptepochs=10,
+    nminibatches=cfg['environment']['nminibatches'],
+    noptepochs=cfg['environment']['noptepochs'],
     cliprange=0.2,
     verbose=1,
 )
 
 # tensorboard
 # Make sure that your chrome browser is already on.
-#TensorboardLauncher(saver.data_dir + '/PPO2_1')
+TensorboardLauncher(saver.data_dir + '/PPO2_1')
 
 # PPO run
-# model.learn(total_timesteps=400000000, eval_every_n=50, log_dir=saver.data_dir, record_video=cfg['record_video'])
-model.learn(total_timesteps=40000, eval_every_n=50, log_dir=saver.data_dir, record_video=cfg['record_video'])
+#model.learn(total_timesteps=400000000, eval_every_n=50, log_dir=saver.data_dir, record_video=cfg['record_video'])
+model.learn(total_timesteps=10000000, eval_every_n=50, log_dir=saver.data_dir, record_video=cfg['record_video'])
 model.save(saver.data_dir)
+#model.load()
 
 # Need this line if you want to keep tensorflow alive after training
 input("Press Enter to exit... Tensorboard will be closed after exit\n")

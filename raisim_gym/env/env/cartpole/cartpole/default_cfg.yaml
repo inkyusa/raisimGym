@@ -3,9 +3,12 @@ record_video: yes
 
 environment:
   num_envs: 10
-  num_threads: 40
+  num_threads: 4
   simulation_dt: 0.0025
   control_dt: 0.01
   max_time: 4.0
+  learning_rate: 1e-3
+  nminibatches: 10
+  noptepochs: 10
 
-  forceRewardCoeff: -5e-5
+  forceRewardCoeff: -5e-7

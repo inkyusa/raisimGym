@@ -148,19 +148,11 @@ class ENVIRONMENT : public RaisimGymEnv {
     updateObservation();
     forceReward_ = forceRewardCoeff_ * cartpole_->getGeneralizedForce().squaredNorm();
 
-    RSFATAL_IF(world_->getContactProblem()->size()>0, "internal contact")
-
-    reward_=5.0;
+    reward_=1.0;
     if(visualizeThisStep_) {
-      gui::rewardLogger.log("forceReward", forceReward_);
-      gui::rewardLogger.log("reward", reward_);
+        gui::rewardLogger.log("forceReward", forceReward_);
+        gui::rewardLogger.log("reward", reward_);
     }
-      if(isinf(forceReward_+reward_) || isinf(-forceReward_-reward_)) {
-          RSINFO("force Reward: "<<forceReward_)
-          RSINFO("cartpole_->getGeneralizedForce().squaredNorm(): "<<cartpole_->getGeneralizedForce().squaredNorm())
-          RSFATAL("Generalized coordinate: "<<cartpole_->getGeneralizedCoordinate().e().transpose())
-      }
-
    return forceReward_ + reward_;
   }
 
@@ -204,7 +196,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   raisim::ArticulatedSystem* cartpole_;
   std::vector<GraphicObject> * cartpoleVisual_;
   Eigen::VectorXd gc_init_, gv_init_, gc_, gv_, actionScaled_,torque_;
-  double terminalRewardCoeff_ = -1000.;
+  double terminalRewardCoeff_ = -10.;
   double forceRewardCoeff_ = 0., forceReward_ = 0.;
   double desired_fps_ = 60.;
   int visualizationCounter_=0;
