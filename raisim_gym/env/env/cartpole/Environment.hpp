@@ -67,7 +67,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// get robot data
     gcDim_ = cartpole_->getGeneralizedCoordinateDim(); //will be two; cart position and pole angle
     gvDim_ = cartpole_->getDOF(); // will be two; cart linear velocity and pole angular velocity.
-    nJoints_ = 1;
+    nJoints_ = 2;
     /// initialize containers
     gc_.setZero(gcDim_); gc_init_.setZero(gcDim_);
     gv_.setZero(gvDim_); gv_init_.setZero(gvDim_);
@@ -75,12 +75,12 @@ class ENVIRONMENT : public RaisimGymEnv {
 
     /// MUST BE DONE FOR ALL ENVIRONMENTS
     obDim_ = 4; /// x,theta, x_dot, theta_dot
-    actionDim_ = nJoints_;
+    actionDim_ = 1;
     actionMean_.setZero(actionDim_); actionStd_.setZero(actionDim_);
     obMean_.setZero(obDim_); obStd_.setZero(obDim_);
 
     /// action & observation scaling
-    actionMean_ = gc_init_.tail(nJoints_);
+    actionMean_ = gc_init_.tail(actionDim_);
     actionStd_.setConstant(0.6);
 
     obMean_.setZero();
@@ -132,7 +132,9 @@ class ENVIRONMENT : public RaisimGymEnv {
   float step(const Eigen::Ref<EigenVec>& action) final {
     /// action scaling
     actionScaled_ = action.cast<double>()*1000;
-    cartpole_->setGeneralizedForce(actionScaled_);
+    Eigen::Vector2d gf; gf.setZero();
+    gf.head(1) = actionScaled_; //set only the first element with action (i.e., cart pushing force)
+    cartpole_->setGeneralizedForce(gf);
 
     auto loopCount = int(control_dt_ / simulation_dt_ + 1e-10);
     auto visDecimation = int(1. / (desired_fps_ * simulation_dt_) + 1e-10);
