@@ -99,6 +99,8 @@ Initial policy | 38 seconds of training
 :-----------------------------------:|:------------------------------------:
 ![alt-text-1](img/100.gif "title-1") | ![alt-text-2](img/150.gif "title-2")
 
+### 1D Cart pole
+Tutorial can be found from [here](https://github.com/inkyusa/raisimGym/wiki/1D-Cart-pole-example).
 
 ## Notes
 * Due to conversion between numpy and eigen, the interface class (e.g., VectorizedEnv) should use row major matrices only.
