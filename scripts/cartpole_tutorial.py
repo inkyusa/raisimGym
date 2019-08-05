@@ -14,7 +14,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cfg', type=str, default=os.path.abspath(__RSCDIR__ + "/default_cfg.yaml"),
                     help='configuration file')
 parser.add_argument('-m', '--mode', required=True, help='set mode either train or test', type=str, default='train')
-
 parser.add_argument('-w', '--weight', help='trained weight path', type=str, default='')
 args = parser.parse_args()
 mode = args.mode
@@ -62,6 +61,8 @@ if mode == 'train':
         record_video=cfg['record_video']
     )
     model.save(saver.data_dir)
+    # Need this line if you want to keep tensorflow alive after training
+    input("Press Enter to exit... Tensorboard will be closed after exit\n")
 # Testing mode with a trained weight
 else:
     weight_path = args.weight
@@ -83,5 +84,4 @@ else:
             print("Episode Length", ep_len)
             running_reward = 0.0
             ep_len = 0
-# Need this line if you want to keep tensorflow alive after training
-input("Press Enter to exit... Tensorboard will be closed after exit\n")
+
