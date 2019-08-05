@@ -24,7 +24,7 @@
 // THE SOFTWARE.
 
 /* Convention
-*   action space = force                                     n = 1, index =0
+*   action space = force (continuous)                        n = 1, index =0
 *
 *   observation space = [ x (cart position)                  n =  1, index=0
                           theta (tilted angle),              n =  1, index=1
