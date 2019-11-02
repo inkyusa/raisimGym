@@ -77,7 +77,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     gc_init_ << 0, 0, 0.54, 1.0, 0.0, 0.0, 0.0, 0.03, 0.4, -0.8, -0.03, 0.4, -0.8, 0.03, -0.4, 0.8, -0.03, -0.4, 0.8;
 
     /// set pd gains
-    Eigen::VectorXd jointPgain(gcDim_), jointDgain(gvDim_);
+    Eigen::VectorXd jointPgain(gvDim_), jointDgain(gvDim_);
     jointPgain.setZero(); jointPgain.tail(nJoints_).setConstant(40.0);
     jointDgain.setZero(); jointDgain.tail(nJoints_).setConstant(1.0);
     anymal_->setPdGains(jointPgain, jointDgain);
@@ -107,8 +107,9 @@ class ENVIRONMENT : public RaisimGymEnv {
         Eigen::VectorXd::Constant(12, 10.0); /// joint velocities
 
     /// Reward coefficients
-    forwardVelRewardCoeff_ = cfg["forwardVelRewardCoeff"].as<double>();
-    torqueRewardCoeff_ = cfg["torqueRewardCoeff"].as<double>();
+    READ_YAML(double, forwardVelRewardCoeff_, cfg["forwardVelRewardCoeff"])
+    READ_YAML(double, torqueRewardCoeff_, cfg["torqueRewardCoeff"])
+
     gui::rewardLogger.init({"forwardVelReward", "torqueReward"});
 
     /// indices of links that should not make contact with ground

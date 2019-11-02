@@ -3,6 +3,9 @@
 ## What is raisimGym
 raisimGym is an example of a gym environment using raisim. It uses stable-baselines (https://github.com/hill-a/stable-baselines) for training and pybind11 (https://github.com/pybind/pybind11) for wrapping raisim in python.
 
+## News
+- There was a bug in the examples. The P gain was set to a wrong dimension. This is fixed as of v0.3.2. Please update to the latest version. If you used the example as a template for your project, please fix your project as well.
+
 ## Requirements
 - Linux only. support ubuntu 16.04 and 18.04 but might work on other distributions
 - g++, gcc > 6 ([how to install?](https://github.com/jhwangbo/raisimHelp/tree/master#how-to-install-latest-version-of-g))
@@ -35,7 +38,7 @@ Now install pybind11 as following
 ```commandline
 cd $WORKSPACE
 git clone https://github.com/pybind/pybind11.git
-cd pybind11 && git checkout v2.2.4 && mkdir build && cd build
+cd pybind11 && git checkout v2.3 && mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=$LOCAL_BUILD -DPYBIND11_TEST=OFF
 make install -j4
 ```
@@ -63,13 +66,9 @@ python3 setup.py install --CMAKE_PREFIX_PATH LOCAL_BUILD --env /WHERE/YOUR/CUSTO
 The "--env" directory should include a file called "Environment.hpp" which contains ENVIRONMENT class.
 
 ## Compiling examples
-For the ANYmal example,
+We provide a shortcut for building examples. Replace ```$EXAMPLE_NAME``` by one of the following names: anymal, laikago, and quadrotor
 ```
-python3 setup.py install --CMAKE_PREFIX_PATH $LOCAL_BUILD --env anymal
-```
-For the Laikago example,
-```
-python3 setup.py install --CMAKE_PREFIX_PATH $LOCAL_BUILD --env laikago
+python3 setup.py install --CMAKE_PREFIX_PATH $LOCAL_BUILD --env $EXAMPLE_NAME
 ```
 
 ## Run
@@ -84,6 +83,8 @@ python3 scripts/anymal_blind_locomotion.py
 3. Create a container using the provided docker runner ```$WORKSPACE/raisimGym/dockers/gpu/runner.bash```
 4. Inside the container, compile your environment and execute your runner
 
+## Tutorial
+Dr. Inkyu Sa kindly provided a comphensive tutorial on raisimGym [here](https://github.com/inkyusa/raisimGymTutorial)
 
 ## Examples of trained policies
 
@@ -99,8 +100,9 @@ Initial policy | 38 seconds of training
 :-----------------------------------:|:------------------------------------:
 ![alt-text-1](img/100.gif "title-1") | ![alt-text-2](img/150.gif "title-2")
 
-### 1D Cart pole
-Tutorial can be found from [here](https://github.com/inkyusa/raisimGym/wiki/1D-Cart-pole-example).
+### Quadrotor
+This quadrotor example is not fully tuned for real applications. Please feel free to optimize the example
+![alt-text-1](img/quad.gif "title-1")
 
 ## Notes
 * Due to conversion between numpy and eigen, the interface class (e.g., VectorizedEnv) should use row major matrices only.
@@ -116,3 +118,12 @@ Fork the repo, make changes and then send a pull request. Instructions can be fo
 
 ## References
 [1] Schulman, John, et al. "Proximal policy optimization algorithms." arXiv preprint arXiv:1707.06347 (2017).
+
+## Contributors
+
+Jemin Hwangbo is developing/manaing raisimGym with help from the followig contributors
+
+- Inkyu Sa
+- Haloted
+
+
