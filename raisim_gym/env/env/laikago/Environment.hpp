@@ -59,7 +59,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// add objects
     laikago_ = world_->addArticulatedSystem(resourceDir_+"/laikago.urdf");
     laikago_->setControlMode(raisim::ControlMode::PD_PLUS_FEEDFORWARD_TORQUE);
-    auto ground = world_->addGround();
+    ground_ = world_->addGround();
     world_->setERP(0,0);
 
     /// get robot data
@@ -74,10 +74,10 @@ class ENVIRONMENT : public RaisimGymEnv {
     pTarget_.setZero(gcDim_); vTarget_.setZero(gvDim_); pTarget12_.setZero(nJoints_);
 
     /// this is nominal configuration of anymal
-    gc_init_ << 0, 0, 0.44, 0.7071067, 0.70710678, 0.0, 0.0, 0.0, 0.0, -0.7, 0, 0, -0.7, 0.00, 0, -0.7, 0, 0, -0.7;
+    gc_init_ << 0, 0, 0.46, 1, 0.0, 0.0, 0.0, 0.0, 0.5, -1, 0, 0.5, -1, 0.00, 0.5, -1, 0, 0.5, -0.7;
 
     /// set pd gains
-    Eigen::VectorXd jointPgain(gcDim_), jointDgain(gvDim_);
+    Eigen::VectorXd jointPgain(gvDim_), jointDgain(gvDim_);
     jointPgain.setZero(); jointPgain.tail(nJoints_).setConstant(40.0);
     jointDgain.setZero(); jointDgain.tail(nJoints_).setConstant(1.0);
     laikago_->setPdGains(jointPgain, jointDgain);
@@ -107,15 +107,13 @@ class ENVIRONMENT : public RaisimGymEnv {
         Eigen::VectorXd::Constant(12, 10.0); /// joint velocities
 
     /// Reward coefficients
-    forwardVelRewardCoeff_ = cfg["forwardVelRewardCoeff"].as<double>();
-    torqueRewardCoeff_ = cfg["torqueRewardCoeff"].as<double>();
+    READ_YAML(double, forwardVelRewardCoeff_, cfg["forwardVelRewardCoeff"])
+    READ_YAML(double, torqueRewardCoeff_, cfg["torqueRewardCoeff"])
+
     gui::rewardLogger.init({"forwardVelReward", "torqueReward"});
 
     /// indices of links that should not make contact with ground
-    footIndices_.insert(laikago_->getBodyIdx("FR_lower_leg"));
-    footIndices_.insert(laikago_->getBodyIdx("FL_lower_leg"));
-    footIndices_.insert(laikago_->getBodyIdx("RR_lower_leg"));
-    footIndices_.insert(laikago_->getBodyIdx("RL_lower_leg"));
+    bodyIndex_ = laikago_->getBodyIdx("trunk");
 
     /// visualize if it is the first environment
     if (visualizable_) {
@@ -134,7 +132,7 @@ class ENVIRONMENT : public RaisimGymEnv {
       vis->initApp();
 
       laikagoVisual_ = vis->createGraphicalObject(laikago_, "Laikago");
-      vis->createGraphicalObject(ground, 20, "floor", "checkerboard_green");
+      vis->createGraphicalObject(ground_, 20, "floor", "checkerboard_green");
       desired_fps_ = 50.;
       vis->setDesiredFPS(desired_fps_);
     }
@@ -174,7 +172,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     updateObservation();
 
     torqueReward_ = torqueRewardCoeff_ * laikago_->getGeneralizedForce().squaredNorm();
-    forwardVelReward_ = forwardVelRewardCoeff_ * bodyLinearVel_[2];
+    forwardVelReward_ = forwardVelRewardCoeff_ * bodyLinearVel_[0];
 
     if(visualizeThisStep_) {
       gui::rewardLogger.log("torqueReward", torqueReward_);
@@ -183,7 +181,7 @@ class ENVIRONMENT : public RaisimGymEnv {
       /// set camera
       auto vis = raisim::OgreVis::get();
       vis->select(laikagoVisual_->at(0), false);
-      vis->getCameraMan()->setYawPitchDist(Ogre::Radian(-1.57), Ogre::Radian(-1.0), 3);
+      vis->getCameraMan()->setYawPitchDist(Ogre::Radian(0), Ogre::Radian(-1.0), 3);
     }
 
     return torqueReward_ + forwardVelReward_;
@@ -232,7 +230,8 @@ class ENVIRONMENT : public RaisimGymEnv {
 
     /// if the contact body is not feet
     for(auto& contact: laikago_->getContacts())
-      if(footIndices_.find(contact.getlocalBodyIndex()) == footIndices_.end()) {
+      if(contact.getPairObjectIndex() == ground_->getIndexInWorld() &&
+         contact.getlocalBodyIndex() == bodyIndex_) {
         return true;
       }
 
@@ -262,7 +261,8 @@ class ENVIRONMENT : public RaisimGymEnv {
   Eigen::VectorXd actionMean_, actionStd_, obMean_, obStd_;
   Eigen::VectorXd obDouble_, obScaled_;
   Eigen::Vector3d bodyLinearVel_, bodyAngularVel_;
-  std::set<size_t> footIndices_;
+  size_t bodyIndex_;
+  raisim::Ground* ground_;
 };
 
 }

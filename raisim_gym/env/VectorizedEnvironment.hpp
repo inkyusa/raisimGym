@@ -36,10 +36,12 @@ class VectorizedEnvironment {
 
  public:
 
-  explicit VectorizedEnvironment(std::string resourceDir,
-                                 std::string cfg)
+  explicit VectorizedEnvironment(std::string resourceDir, std::string cfg)
       : resourceDir_(resourceDir) {
     cfg_ = YAML::Load(cfg);
+    if(cfg_["render"])
+      render_ = cfg_["render"].as<bool>();
+
   }
 
   ~VectorizedEnvironment() {
@@ -52,10 +54,13 @@ class VectorizedEnvironment {
     num_envs_ = cfg_["num_envs"].template as<int>();
 
     for (int i = 0; i < num_envs_; i++) {
-      environments_.push_back(new ChildEnvironment(resourceDir_, cfg_, i == 0));
+      environments_.push_back(new ChildEnvironment(resourceDir_, cfg_, render_ && i == 0));
       environments_.back()->setSimulationTimeStep(cfg_["simulation_dt"].template as<double>());
       environments_.back()->setControlTimeStep(cfg_["control_dt"].template as<double>());
     }
+
+    if(render_) raisim::OgreVis::get()->hideWindow();
+
 
     for (int i = 0; i < num_envs_; i++) {
       // only the first environment is visualized
@@ -80,7 +85,7 @@ class VectorizedEnvironment {
 
   // resets all environments and returns observation
   void reset(Eigen::Ref<EigenRowMajorMat>& ob) {
-    for (auto &env: environments_)
+    for (auto env: environments_)
       env->reset();
 
     observe(ob);
@@ -97,10 +102,10 @@ class VectorizedEnvironment {
             Eigen::Ref<EigenBoolVec> &done,
             Eigen::Ref<EigenRowMajorMat> &extraInfo) {
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 0; i < num_envs_; i++)
+    for (int i = 0; i < num_envs_; i++) {
       perAgentStep(i, action, ob, reward, done, extraInfo);
-
-    observe(ob);
+      environments_[i]->observe(ob.row(i));
+    }
   }
 
   void testStep(Eigen::Ref<EigenRowMajorMat> &action,
@@ -108,18 +113,27 @@ class VectorizedEnvironment {
                 Eigen::Ref<EigenVec> &reward,
                 Eigen::Ref<EigenBoolVec> &done,
                 Eigen::Ref<EigenRowMajorMat> &extraInfo) {
-    environments_[0]->turnOnVisualization();
+    if(render_) environments_[0]->turnOnVisualization();
     perAgentStep(0, action, ob, reward, done, extraInfo);
-    environments_[0]->turnOffvisualization();
+    if(render_) environments_[0]->turnOffvisualization();
+
     environments_[0]->observe(ob.row(0));
   }
 
   void startRecordingVideo(const std::string& fileName) {
-    environments_[0]->startRecordingVideo(fileName);
+    if(render_) environments_[0]->startRecordingVideo(fileName);
   }
 
   void stopRecordingVideo() {
-    environments_[0]->stopRecordingVideo();
+    if(render_) environments_[0]->stopRecordingVideo();
+  }
+
+  void showWindow() {
+    raisim::OgreVis::get()->showWindow();
+  }
+
+  void hideWindow() {
+    raisim::OgreVis::get()->hideWindow();
   }
 
   void setSeed(int seed) {
@@ -190,7 +204,7 @@ class VectorizedEnvironment {
 
   int num_envs_ = 1;
   int obDim_ = 0, actionDim_ = 0;
-  bool recordVideo_;
+  bool recordVideo_=false, render_=false;
   std::string resourceDir_;
   YAML::Node cfg_;
 };

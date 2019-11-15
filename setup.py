@@ -25,8 +25,8 @@ if "--env" in sys.argv:
         __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/ANYmal"
     elif environment == 'laikago':
         __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/laikago"
-    elif environment == 'cartpole':
-        __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/cartpole"
+    elif environment == 'quadrotor':
+        __ENVIRONMENT_PATH__ = os.path.dirname(os.path.realpath(__file__)) + "/raisim_gym/env/env/hummingbird"
     else:
         __ENVIRONMENT_PATH__ = environment
 
@@ -87,7 +87,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='raisim_gym',
-    version='0.0.0',
+    version='0.5.0',
     author='Jemin Hwangbo',
     license="MIT",
     packages=find_packages(),
@@ -95,7 +95,7 @@ setup(
     description='gym for raisim.',
     long_description='',
     ext_modules=[CMakeExtension('_raisim_gym')],
-    install_requires=['gym>=0.2.3', 'ruamel.yaml', 'numpy', 'stable_baselines>=2.5.1'],
+    install_requires=['gym>=0.2.3', 'ruamel.yaml', 'numpy', 'stable_baselines>=2.8'],
     cmdclass=dict(build_ext=CMakeBuild),
     include_package_data=True,
     zip_safe=False,

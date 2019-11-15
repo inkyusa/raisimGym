@@ -56,7 +56,7 @@ RUN make install -j
 # ------------------------------------------------------------------
 # pybind11
 RUN cd $WORKSPACE && git clone https://github.com/pybind/pybind11.git &&\
-    cd pybind11 && git checkout v2.2.4 && mkdir build && cd build &&\
+    cd pybind11 && git checkout v2.3.0 && mkdir build && cd build &&\
     cmake .. -DCMAKE_INSTALL_PREFIX=$LOCAL_BUILD -DPYBIND11_TEST=OFF &&\
     make install -j4
 
@@ -87,6 +87,10 @@ RUN dpkg --add-architecture i386 && \
         libx11-6 libx11-6:i386 && \
     rm -rf /var/lib/apt/lists/*
 
+# ==================================================================
+# firefox
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y firefox
 
 # ==================================================================
 # display

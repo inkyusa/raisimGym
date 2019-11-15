@@ -29,9 +29,12 @@ class RaisimGymVecEnv(VecEnv):
         else:
             self.wrapper.testStep(action, self._observation, self._reward, self._done, self._extraInfo)
 
-        info = [{'extra_info': {
-            self._extraInfoNames[j]: self._extraInfo[i, j],
-        }} for j in range(0, len(self._extraInfoNames)) for i in range(self.num_envs)]
+        if len(self._extraInfoNames) is not 0:
+            info = [{'extra_info': {
+                self._extraInfoNames[j]: self._extraInfo[i, j],
+            }} for j in range(0, len(self._extraInfoNames)) for i in range(self.num_envs)]
+        else:
+            info = [{} for i in range(self.num_envs)]
 
         for i in range(self.num_envs):
             self.rewards[i].append(self._reward[i])
@@ -118,6 +121,12 @@ class RaisimGymVecEnv(VecEnv):
         :return: (list) List of items returned by the environment's method call
         """
         raise RuntimeError('This method is not implemented')
+
+    def show_window(self):
+        self.wrapper.showWindow()
+
+    def hide_window(self):
+        self.wrapper.hideWindow()
 
     @property
     def num_envs(self):
