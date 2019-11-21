@@ -22,7 +22,7 @@ cfg = YAML().load(open(cfg_abs_path, 'r'))
 
 # save the configuration and other files
 rsg_root = os.path.dirname(os.path.abspath(__file__)) + '/../'
-log_dir = rsg_root + '/QuadrotorTrainingdata'
+log_dir = rsg_root + '/data'
 saver = ConfigurationSaver(log_dir=log_dir+'/quadrotor_position_tracking',
                            save_items=[rsg_root+'raisim_gym/env/env/hummingbird/Environment.hpp', cfg_abs_path])
 
@@ -89,7 +89,7 @@ else:
         obs, reward, done, infos = env.step(action, visualize=True)
         running_reward += reward[0]
         ep_len += 1
-        if done:
+        if done[0]:
             print("Episode Reward: {:.2f}".format(running_reward))
             print("Episode Length", ep_len)
             running_reward = 0.0
