@@ -32,13 +32,14 @@ Install the following dependencies
 - Raisim (https://github.com/leggedrobotics/raisimLib)
 - RaisimOgre (https://github.com/leggedrobotics/raisimOgre)
 - yaml-cpp (sudo apt-get install libyaml-cpp-dev)
+- tensorflow (pip3 install tensorflow==1.14 or pip3 install tensorflow-gpu==1.14)
 
 Now install pybind11 as following
 
 ```commandline
 cd $WORKSPACE
 git clone https://github.com/pybind/pybind11.git
-cd pybind11 && git checkout v2.3 && mkdir build && cd build
+cd pybind11 && git checkout v2.4.3 && mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=$LOCAL_BUILD -DPYBIND11_TEST=OFF
 make install -j4
 ```
@@ -76,6 +77,17 @@ You can make your own runner. To use the example runner,
 ```$xslt
 python3 scripts/anymal_blind_locomotion.py
 ```
+You can also test your trained model. To use the example runner,
+```$xslt
+python3 scripts/anymal_blind_locomotion.py --mode test --weight /WHERE/YOUR/CUSTOM/MODEL/IS
+```
+
+## How to debug
+C++ is much more efficient than python but it is more prone to errors and you will often see segfaults. The standard tools to fix bugs in C++ are GDB and Valgrind. But it is hard to use them with Python (it is possible but just not as convenient). The recommended debugging option for raisimGym is to use the built-in debugging app which can be compiled by passing `--Debug` flag while running setup.py
+
+For e.g., `python3 setup.py install --CMAKE_PREFIX_PATH $LOCAL_BUILD --env anymal --Debug`
+
+This creates an executable. This executable takes three arguments: 1. resource directory 2. configuration file 3. "render" or "no_render". If you choose to render, valgrind will detect many errors in the graphics driver and renderder. These are memory leaks that will not crash your execution.
 
 ## Using raisimGym in Docker
 1. Install docker and Nvidia-docker2 ([instruction](https://github.com/jhwangbo/raisimHelp/tree/master#install-docker--nvidia-docker2)).
